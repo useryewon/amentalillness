@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sixtyfour+Convergence&display=swap" rel="stylesheet">
+    <title>a mental illness</title>
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background-color: black;
+            cursor: url('camimg.png') 0 0,auto;
+            position: relative;
+        }
+
+        h1{
+            font-family: "Sixtyfour Convergence", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "BLED" 0, "SCAN" 0, "XELA" 0, "YELA" 0;
+            width: 1000px;
+            color: White;
+            position: absolute;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            z-index: 999;
+            animation: blinkBounce 2s infinite;
+        }
+
+        .link:hover { cursor : pointer; }
+
+        #camera-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #video {
+            width: 400px;
+            height: 300px;
+            object-fit: cover;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        #rain-canvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 20;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 1);
+            pointer-events: none;
+        }
+
+        #capture-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 3;
+        }
+
+        .scatter-img {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            z-index: 10;
+            pointer-events: none;
+            transition: transform 0.5s ease-out; 
+        }
+
+        @keyframes blinkBounce {
+            0%, 100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) translateY(0);
+            }
+            50% {
+                opacity: 0.2;
+                transform: translate(-50%, -50%) translateY(-500px);
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>This is your mental state!<br>
+        This is your mental state!<br>
+        This is your mental state!
+    </h1>
+
+    <div id="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="rain-canvas"></canvas>
+        <div id="overlay"></div>
+        <canvas id="capture-canvas"></canvas> 
+    </div>
+
+    <audio id="background-music" src="stmusic.mp4"></audio>
+
+        <script>
+            alert("Are you stressed out?");
+
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('rain-canvas');
+            const ctx = canvas.getContext('2d');
+            const overlay = document.getElementById('overlay');
+            const captureCanvas = document.getElementById('capture-canvas');
+            const captureCtx = captureCanvas.getContext('2d');
+            const h1 = document.querySelector('h1');
+
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("카메라에 접근할 수 없습니다: ", err);
+                });
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            captureCanvas.width = window.innerWidth;
+            captureCanvas.height = window.innerHeight;
+
+            const music = document.getElementById('background-music');
+            let musicPlayed = false;
+
+            function playMusic() {
+              if (!musicPlayed) {
+                const playPromise = music.play();
+                if (playPromise !== undefined) {
+                  playPromise.then(() => {
+                    musicPlayed = true;
+                  }).catch(error => {
+                    console.error("음악을 재생할 수 없습니다:", error);
+                  });
+                }
+              }
+            }
+
+            document.addEventListener('click', playMusic);
+
+            document.addEventListener('mousemove', (event) => {
+                const { clientX, clientY } = event;
+
+            captureCtx.drawImage(video, clientX - 200, clientY - 150, 400, 300);
+              });
+
+            window.addEventListener('resize', () => {
+                captureCanvas.width = window.innerWidth;
+                captureCanvas.height = window.innerHeight;
+            });
+
+
+            function createRain() {
+                const raindrops = [];
+                const raindropCount = 2000;
+
+                for (let i = 0; i < raindropCount; i++) {
+                    raindrops.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        length: Math.random() * 70 + 20,
+                        opacity: Math.random() * 0.4 + 0.1,
+                    });
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'blue';
+                    raindrops.forEach(drop => {
+                        ctx.globalAlpha = drop.opacity;
+                        ctx.fillRect(drop.x, drop.y, 2, drop.length);
+                        drop.y += drop.length / 10;
+                        if (drop.y > canvas.height) {
+                            drop.y = -drop.length;
+                            drop.x = Math.random() * canvas.width;
+                        }
+                    });
+                    requestAnimationFrame(draw);
+                }
+
+                draw();
+            }
+
+            createRain();
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                captureCanvas.width = window.innerWidth;
+                captureCanvas.height = window.innerHeight;
+            });
+
+            window.addEventListener('mousemove', (event) => {
+                const { clientX, clientY } = event;
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                const red = Math.floor((clientX / width) * 255);
+                const green = Math.floor((clientY / height) * 255);
+                const blue = 255 - red;
+
+                overlay.style.backgroundColor = `rgba(${red}, ${green}, ${blue}, 0.3)`;
+            });
+
+
+            const imagePaths = ['img1.png', 'img2.png', 'img3.png', 'img4.png', 'img5.png', 'img6.png'];
+
+            function scatterImages(event) {
+            for (let i = 0; i < 6; i++) {
+                const img = document.createElement('img');
+                const randomIndex = Math.floor(Math.random() * imagePaths.length);
+
+                img.src = imagePaths[randomIndex]
+                img.classList.add('scatter-img');
+                document.body.appendChild(img);
+
+                // 무작위 크기 설정
+                const randomSize = Math.random() * 100 + 50; // 50px ~ 150px
+                img.style.width = `${randomSize}px`;
+                img.style.height = 'auto'; // 비율 유지
+
+                const randomX = Math.random() * window.innerWidth;
+                const randomY = Math.random() * window.innerHeight;
+                const randomAngle = Math.random() * 360;
+
+                img.style.left = `${event.clientX}px`;
+                img.style.top = `${event.clientY}px`;
+
+                img.style.transform = `rotate(${randomAngle}deg)`;
+
+                setTimeout(() => {
+                    img.style.transform = `translate(${randomX - event.clientX}px, ${randomY - event.clientY}px) rotate(${randomAngle}deg)`;
+                }, 50);
+
+            }
+        }
+
+        document.addEventListener('click', scatterImages);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        </script>
+</body>
+</html>
